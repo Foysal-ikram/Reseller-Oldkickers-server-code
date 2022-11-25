@@ -68,6 +68,39 @@ async function run(){
             console.log(users)
             res.send(users)
         } )
+
+        app.put('/admin' , async (req,res)=>{
+            const id = req.query.id ;
+            console.log(id);
+            const search = { _id : ObjectId(id)}
+            const querry = req.body ;
+            const option = {upsert : true } ;
+            const updateUser = {
+                $set: {
+                    role: 'admin'
+                }
+            }
+            const result = await userCollection.updateOne(search, updateUser, option);
+            res.send(result)
+
+        })
+        app.put('/removeadmin', async (req, res) => {
+            const id = req.query.id;
+            const search = { _id: ObjectId(id) }
+            const admin = req.body;
+            const option = { upsert: true };
+            const updateUser = {
+                $set: {
+                    role: 'buyer'
+                }
+            }
+            const result = await userCollection.updateOne(search, updateUser, option);
+            res.send(result)
+        })
+
+
+
+
     }
     finally{
 
