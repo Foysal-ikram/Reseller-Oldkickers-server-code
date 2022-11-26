@@ -35,46 +35,63 @@ function verifyJWT(req, res, next) {
         next();
     })
 
- 
+
 
 }
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.tngy8ld.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
-async function run(){
+async function run() {
 
-    const userCollection =  client.db('Reseller').collection('users');
+    const userCollection = client.db('Reseller').collection('users');
+    const productCollection = client.db('Reseller').collection('products');
+    
 
-    try{
-      
-        app.post('/users' , async (req,res)=>{
-            const users = req.body ;
-            const email = users.email ;
-            console.log(users)
-            const query = {email :email}
-            const search = await userCollection.find(query).toArray() ;
-            console.log(search)
-            if(search.length){
-                return 
-            }
-            const result =await userCollection.insertOne(users) ;
-           //console.log(search)
+    try {
+
+        app.delete('/users', async (req, res) => {
+            const id = req.query.id;
+            const query = {_id : ObjectId(id)}
+            const result= await userCollection.deleteOne(query)
+            
             res.send(result)
         })
-        app.get('/users', async (req,res)=>{
-            const query = {} ;
-            const users = await userCollection.find(query).toArray();
-            console.log(users)
-            res.send(users)
-        } )
 
-        app.put('/admin' , async (req,res)=>{
-            const id = req.query.id ;
+        app.post('/users', async (req, res) => {
+            const users = req.body;
+            const email = users.email;
+            console.log(users)
+            const query = { email: email }
+            const search = await userCollection.find(query).toArray();
+            console.log(search)
+            if (search.length) {
+                return
+            }
+            const result = await userCollection.insertOne(users);
+            //console.log(search)
+            res.send(result)
+        })
+
+        app.get('/sellers', async (req, res) => {
+            const query = { account_type: "seller" }
+            const sellers = await userCollection.find(query).toArray()
+            res.send(sellers)
+        })
+
+
+        app.get('/users', async (req, res) => {
+            const query = {};
+            const users = await userCollection.find(query).toArray();
+            res.send(users)
+        })
+
+        app.put('/admin', async (req, res) => {
+            const id = req.query.id;
             console.log(id);
-            const search = { _id : ObjectId(id)}
-            const querry = req.body ;
-            const option = {upsert : true } ;
+            const search = { _id: ObjectId(id) }
+            const querry = req.body;
+            const option = { upsert: true };
             const updateUser = {
                 $set: {
                     role: 'admin'
@@ -98,11 +115,29 @@ async function run(){
             res.send(result)
         })
 
+// ---------------------------------------------Product add----------------------------------
 
-
+        app.post('/products' , async (req,res)=>{
+            const details = req.body ;
+            console.log(details) ;
+            const result = await productCollection.insertOne(details)
+            res.send(result)
+        })
+        app.get('/products' , async (req,res)=>{
+            const query = {} ;
+            const result = await productCollection.find(query).toArray() ;
+           
+            res.send(result)
+        })
+        app.get('/catagory/:name' , async (req,res)=>{
+            const name = req.params.name ;
+            const jquery = {catagory_name:name} ;
+            const result = await productCollection.find(jquery).toArray() ;
+            res.send(result)
+        })
 
     }
-    finally{
+    finally {
 
     }
 }
