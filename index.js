@@ -46,15 +46,15 @@ async function run() {
 
     const userCollection = client.db('Reseller').collection('users');
     const productCollection = client.db('Reseller').collection('products');
-    
+
 
     try {
 
         app.delete('/users', async (req, res) => {
             const id = req.query.id;
-            const query = {_id : ObjectId(id)}
-            const result= await userCollection.deleteOne(query)
-            
+            const query = { _id: ObjectId(id) }
+            const result = await userCollection.deleteOne(query)
+
             res.send(result)
         })
 
@@ -86,9 +86,57 @@ async function run() {
             res.send(users)
         })
 
-        app.put('/admin', async (req, res) => {
+        // -----------------------------Seller  verification starts-----------------------------------------
+
+
+        app.put('/sellerverify', async (req, res) => {
             const id = req.query.id;
             console.log(id);
+            const search = { _id: ObjectId(id) }
+            const querry = req.body;
+            const option = { upsert: true };
+            const updateUser = {
+                $set: {
+                    verifyStatus: true
+                }
+            }
+            const result = await userCollection.updateOne(search, updateUser, option);
+            console.log(result)
+            res.send(result)
+        })
+
+        app.get('/sellerverify/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            console.log(email)
+            const user = await userCollection.findOne(query);
+            console.log(user)
+            res.send({ isverified: user?.verifyStatus === true });
+            
+        })
+
+        app.get('/seller/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            console.log(email)
+            const user = await userCollection.findOne(query);
+            console.log(user)
+            res.send({ isSeller: user?.account_type === 'seller' });
+            
+        })
+
+        // ------------------------------   Verified    ------------------------------------------
+
+        app.get('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            const user = await userCollection.findOne(query);
+            res.send({ isAdmin: user?.role === 'admin' });
+        })
+
+        app.put('/admin', async (req, res) => {
+            const id = req.query.id;
+            // console.log(id);
             const search = { _id: ObjectId(id) }
             const querry = req.body;
             const option = { upsert: true };
@@ -101,6 +149,7 @@ async function run() {
             res.send(result)
 
         })
+
         app.put('/removeadmin', async (req, res) => {
             const id = req.query.id;
             const search = { _id: ObjectId(id) }
@@ -115,24 +164,24 @@ async function run() {
             res.send(result)
         })
 
-// ---------------------------------------------Product add----------------------------------
+        // ---------------------------------------------Product add----------------------------------
 
-        app.post('/products' , async (req,res)=>{
-            const details = req.body ;
-            console.log(details) ;
+        app.post('/products', async (req, res) => {
+            const details = req.body;
+            // console.log(details);
             const result = await productCollection.insertOne(details)
             res.send(result)
         })
-        app.get('/products' , async (req,res)=>{
-            const query = {} ;
-            const result = await productCollection.find(query).toArray() ;
-           
+        app.get('/products', async (req, res) => {
+            const query = {};
+            const result = await productCollection.find(query).toArray();
+
             res.send(result)
         })
-        app.get('/catagory/:name' , async (req,res)=>{
-            const name = req.params.name ;
-            const jquery = {catagory_name:name} ;
-            const result = await productCollection.find(jquery).toArray() ;
+        app.get('/catagory/:name', async (req, res) => {
+            const name = req.params.name;
+            const jquery = { catagory_name: name };
+            const result = await productCollection.find(jquery).toArray();
             res.send(result)
         })
 
