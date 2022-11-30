@@ -46,9 +46,21 @@ async function run() {
 
     const userCollection = client.db('Reseller').collection('users');
     const productCollection = client.db('Reseller').collection('products');
+    const bookingCollection = client.db('Reseller').collection('bookings');
 
 
     try {
+
+        // ----------------------------Bookings------------------------
+        
+        app.post('/bookings', async (req, res) => {
+            const booking = req.body;
+            console.log(booking);
+            const result = await bookingCollection.insertOne(booking)
+            res.send(result)
+        })
+
+        // ----------------------------Bookings Ends------------------------
 
         app.delete('/users', async (req, res) => {
             const id = req.query.id;
@@ -61,10 +73,10 @@ async function run() {
         app.post('/users', async (req, res) => {
             const users = req.body;
             const email = users.email;
-            console.log(users)
+            
             const query = { email: email }
             const search = await userCollection.find(query).toArray();
-            console.log(search)
+           
             if (search.length) {
                 return
             }
@@ -91,7 +103,7 @@ async function run() {
 
         app.put('/sellerverify', async (req, res) => {
             const id = req.query.id;
-            console.log(id);
+            
             const search = { _id: ObjectId(id) }
             const querry = req.body;
             const option = { upsert: true };
@@ -101,16 +113,16 @@ async function run() {
                 }
             }
             const result = await userCollection.updateOne(search, updateUser, option);
-            console.log(result)
+           
             res.send(result)
         })
 
         app.get('/sellerverify/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email }
-            console.log(email)
+            
             const user = await userCollection.findOne(query);
-            console.log(user)
+            
             res.send({ isverified: user?.verifyStatus === true });
             
         })
@@ -118,7 +130,7 @@ async function run() {
         app.get('/seller/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email }
-            console.log(email)
+            
             const user = await userCollection.findOne(query);
             console.log(user)
             res.send({ isSeller: user?.account_type === 'seller' });
@@ -184,6 +196,21 @@ async function run() {
             const result = await productCollection.find(jquery).toArray();
             res.send(result)
         })
+// ------------------------------------------------jwt-----------------------------------------------------
+        app.get('/jwt', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const user = await userCollection.findOne(query);
+           
+            if (user) {
+                const token = jwt.sign({email}, process.env.Token, { expiresIn: '1h' })
+                console.log({ accessToken: token })
+                return res.send({ accessToken: token });
+            }
+            res.status(403).send({ accessToken: '' })
+        });
+
+
 
     }
     finally {
